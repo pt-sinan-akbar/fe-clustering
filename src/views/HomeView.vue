@@ -90,7 +90,7 @@ const keyFindings = [
 </script>
 
 <template>
-    <div class="h-[99vh] p-4 border">
+    <div class="h-screen p-4">
         <div class="h-full w-full font-semibold">
             <div class="grid grid-cols-5 grid-rows-10 gap-4 w-full h-full">
                 <!-- Title - Full Width -->
@@ -244,9 +244,7 @@ const keyFindings = [
                                     <span class="text-lg">{{ result.icon }}</span>
                                     <p class="text-xs font-semibold text-pink-800/70">{{ result.label }}</p>
                                 </div>
-                                <div class="flex-1 flex justify-center items-center">
-                                    <p class="text-xs text-pink-600/70 line-clamp-2">{{ result.description }}</p>
-                                </div>
+                                <p class="text-xs text-pink-600/70 line-clamp-2">{{ result.description }}</p>
                             </GlassMorphismContainer>
                         </div>
                     </GlassMorphismContainer>
