@@ -3,22 +3,28 @@
         <div class="h-full w-full font-semibold">
             <GlassMorphismContainer class="grid grid-cols-12 grid-rows-8 gap-4 w-full h-full p-4">
                 <GlassMorphismContainer class="col-span-6 row-span-7 h-full w-full overflow-hidden">
-                    <RFMScatterPlot :rfmData="customers" class="w-full h-full" />
+                    <RFMScatterPlot :rfmData="customersWithStringCluster" class="w-full h-full" />
                 </GlassMorphismContainer>
                 <GlassMorphismContainer
                     class="col-span-2 row-span-2 col-start-1 row-start-8 w-full h-full flex flex-col justify-center items-center">
                     <h3 class="text-md font-semibold text-pink-800/70">Calinski-Harabasz Metric</h3>
-                    <p class="text-lg font-bold text-pink-600/70">xxxx,xx</p>
+                    <p class="text-lg font-bold text-pink-600/70">
+                        {{ formatDecimal(calinski_harabasz ?? undefined) }}
+                    </p>
                 </GlassMorphismContainer>
                 <GlassMorphismContainer
                     class="col-span-2 row-span-2 col-start-3 row-start-8 w-full h-full flex flex-col justify-center items-center">
                     <h3 class="text-md font-semibold text-pink-800/70">Silhouette Metric</h3>
-                    <p class="text-lg font-bold text-pink-600/70">xxxx,xx</p>
+                    <p class="text-lg font-bold text-pink-600/70">
+                        {{ formatDecimal(silhouette ?? undefined) }}
+                    </p>
                 </GlassMorphismContainer>
                 <GlassMorphismContainer
                     class="col-span-2 row-span-2 col-start-5 row-start-8 w-full h-full flex flex-col justify-center items-center">
                     <h3 class="text-md font-semibold text-pink-800/70">Davies-Bouldin Metric</h3>
-                    <p class="text-lg font-bold text-pink-600/70">xxxx,xx</p>
+                    <p class="text-lg font-bold text-pink-600/70">
+                        {{ formatDecimal(davies_bouldin ?? undefined) }}
+                    </p>
                 </GlassMorphismContainer>
                 <GlassMorphismContainer
                     class="col-span-6 row-span-4 col-start-7 row-start-2 w-full h-full flex flex-col gap-2 justify-start max-w-full max-h-full p-4">
@@ -28,7 +34,7 @@
                             dataKey="id" filterDisplay="menu" :loading="loading" size="medium"
                             :globalFilterFields="['id', 'recency', 'frequency', 'monetary', 'state', 'cluster']"
                             class="max-w-full max-h-full h-full w-full flex flex-col" tableStyle="font-size: 12px;">
-                            <template #empty> No customers found. </template>
+                            <!-- <template #empty> No customers found. </template> -->
                             <template #loading> Loading customers data. Please wait. </template>
                             <Column field="id" header="Customer ID" style="min-width: 6rem">
                                 <template #body="{ data }">
@@ -76,7 +82,8 @@
                                     {{ data.cluster }}
                                 </template>
                                 <template #filter="{ filterModel }">
-                                    <InputText v-model="filterModel.value" type="text" placeholder="Search by cluster" />
+                                    <InputText v-model="filterModel.value" type="text"
+                                        placeholder="Search by cluster" />
                                 </template>
                             </Column>
                         </DataTable>
@@ -87,8 +94,10 @@
                     <TheHeader title="Clustering Results" class="w-full text-center" />
                     <GlassMorphismContainer
                         class="overflow-hidden border w-full h-full flex justify-center items-center">
-                        <DataTable :value="clustering_results" removableSort size="medium" tableStyle="font-size: 12px"
+                        <DataTable :value="clustering_results" removableSort size="medium" :loading="loading" tableStyle="font-size: 12px"
                             class="max-w-full max-h-full h-full w-full">
+                            <!-- <template #empty> No cluster results data found </template> -->
+                            <template #loading> Loading cluster results data. Please wait. </template>
                             <Column field="cluster" header="Cluster" sortable style="width: 12.5%"></Column>
                             <Column field="customer_count" header="Count" sortable style="width: 12.5%"></Column>
                             <Column field="percentage" header="Percentage" sortable style="width: 12.5%">
@@ -106,12 +115,13 @@
                 </GlassMorphismContainer>
                 <div class="col-span-6 col-start-7 row-start-1 h-full w-full flex items-center justify-between">
                     <h1 class="text-5xl font-bold text-pink-800/70 h-full flex items-center justify-center">
-                        DBSCAN Clustering
+                        {{ algorithm_name }} Clustering
                     </h1>
                     <div class="col-span-2 col-start-11 row-start-1 h-full flex flex-col items-end justify-center">
                         <p class="text-md font-semibold text-pink-800/70">Algorithm Parameters</p>
-                        <p class="text-pink-600/70 text-xs">MinPts: 12</p>
-                        <p class="text-pink-600/70 text-xs">Epsilon: 0,167</p>
+                        <div v-for="parameter in algorithm_parameters" :key="parameter.name">
+                            <p class="text-pink-600/70 text-xs">{{ parameter.name }}: {{ parameter.value }}</p>
+                        </div>
                     </div>
                 </div>
             </GlassMorphismContainer>
@@ -120,9 +130,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
-import TheGraph from '@/components/RFMScatterPlot.vue';
 import TheHeader from '@/components/TheHeader.vue';
 import GlassMorphismContainer from '@/components/GlassMorphismContainer.vue';
 import DataTable from 'primevue/datatable';
@@ -130,53 +139,87 @@ import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import RFMScatterPlot from '@/components/RFMScatterPlot.vue';
+import { useClusteringStore } from '@/stores/clustering-store';
+import { storeToRefs } from 'pinia';
+import { formatCurrency, formatDecimal } from '@/utils/utils';
 
-const clustering_results = [
-    {
-        cluster: '-1',
-        customer_count: 347,
-        percentage: 0.38,
-        mid_west: 17,
-        north: 7,
-        northeast: 18,
-        south: 45,
-        southeast: 260
-    },
-    {
-        cluster: '0',
-        customer_count: 78933,
-        percentage: 86.37,
-        mid_west: 4587,
-        north: 1502,
-        northeast: 7556,
-        south: 11296,
-        southeast: 53992
-    },
-    {
-        cluster: '1',
-        customer_count: 11925,
-        percentage: 13.05,
-        mid_west: 733,
-        north: 191,
-        northeast: 1010,
-        south: 1739,
-        southeast: 8252
-    },
-    {
-        cluster: '2',
-        customer_count: 188,
-        percentage: 0.21,
-        mid_west: 9,
-        north: 3,
-        northeast: 24,
-        south: 32,
-        southeast: 120
-    }
-];
+interface Props {
+    algorithm: 'kmeans' | 'kprototypes' | 'dbscan' | 'hierarchical' | 'gmm';
+}
 
-const customers = ref();
+const props = defineProps<Props>();
+
+const currentAlgorithm = computed(() => props.algorithm);
+
 const filters = ref();
 const loading = ref(false);
+
+const clusteringStore = useClusteringStore();
+const { getCurrentAlgorithmData } = storeToRefs(clusteringStore);
+
+const customers = computed(() => getCurrentAlgorithmData.value?.customers || [])
+const customersWithStringCluster = computed(() =>
+    customers.value.map(c => ({
+        ...c,
+        cluster: c.cluster != null ? String(c.cluster) : ''
+    }))
+)
+const clustering_results = computed(() => getCurrentAlgorithmData.value?.results || [])
+const algorithm_name = computed(() => getCurrentAlgorithmData.value?.algorithm || '')
+const algorithm_parameters = computed(() => getCurrentAlgorithmData.value?.parameters || [])
+
+const calinski_harabasz = computed(() => getCurrentAlgorithmData.value?.metrics?.calinski_harabasz)
+const silhouette = computed(() => getCurrentAlgorithmData.value?.metrics?.silhouette)
+const davies_bouldin = computed(() => getCurrentAlgorithmData.value?.metrics?.davies_bouldin)
+
+onMounted(async () => {
+    try {
+        loading.value = true;
+        if (currentAlgorithm.value) {
+            await runAlgorithm(currentAlgorithm.value);
+        }
+    } catch (error) {
+        console.error('Failed to initialize clustering:', error);
+    } finally {
+        loading.value = false;
+    }
+});
+
+const runAlgorithm = async (algorithm: string) => {
+    switch (algorithm) {
+        case 'kmeans':
+            await clusteringStore.runKMeans(4, 42);
+            break;
+        case 'kprototypes':
+            await clusteringStore.runKPrototypes(4, 42);
+            break;
+        case 'dbscan':
+            await clusteringStore.runDBSCAN(0.5, 5);
+            break;
+        case 'hierarchical':
+            await clusteringStore.runHierarchical(4, 'ward');
+            break;
+        case 'gmm':
+            await clusteringStore.runGaussianMixture(4, 42);
+            break;
+        default:
+            console.warn('Unknown algorithm:', algorithm);
+    }
+};
+
+
+watch(currentAlgorithm, async (newAlgorithm) => {
+    if (newAlgorithm) {
+        try {
+            loading.value = true;
+            await runAlgorithm(newAlgorithm);
+        } catch (error) {
+            console.error('Failed to run algorithm:', error);
+        } finally {
+            loading.value = false;
+        }
+    }
+}, { immediate: true });
 
 const initFilters = () => {
     filters.value = {
@@ -212,21 +255,6 @@ const initFilters = () => {
 };
 
 initFilters();
-
-customers.value = [
-    { id: 'C001', recency: 10, frequency: 5, monetary: 150.00, state: 'CA', cluster: '0' },
-    { id: 'C002', recency: 20, frequency: 3, monetary: 200.00, state: 'NY', cluster: '1' },
-    { id: 'C003', recency: 5, frequency: 10, monetary: 300.00, state: 'TX', cluster: '0' },
-    { id: 'C004', recency: 15, frequency: 2, monetary: 100.00, state: 'FL', cluster: '-1' },
-    { id: 'C005', recency: 30, frequency: 1, monetary: 50.00, state: 'WA', cluster: '2' }  
-];
-
-const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
-    }).format(value);
-};
 </script>
 
 <style>
