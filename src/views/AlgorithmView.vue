@@ -119,8 +119,10 @@
                     </h1>
                     <div class="col-span-2 col-start-11 row-start-1 h-full flex flex-col items-end justify-center">
                         <p class="text-md font-semibold text-pink-800/70">Algorithm Parameters</p>
-                        <div v-for="parameter in algorithm_parameters" :key="parameter.name">
-                            <p class="text-pink-600/70 text-xs">{{ parameter.name }}: {{ parameter.value }}</p>
+                        <div class="grid grid-rows-2 gap-2 w-full" :style="{ gridAutoFlow: 'column' }">
+                            <div v-for="parameter in algorithm_parameters" :key="parameter.name" class="text-right">
+                                <p class="text-pink-600/70 text-xs">{{ parameter.name }}: {{ parameter.value }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -191,7 +193,7 @@ const runAlgorithm = async (algorithm: string) => {
             await clusteringStore.runKMeans(4, 42);
             break;
         case 'kprototypes':
-            await clusteringStore.runKPrototypes(4, 42);
+            await clusteringStore.runKPrototypes(4, 42, 'huang', 1.0, 'euclidean', 'euclidean');
             break;
         case 'dbscan':
             await clusteringStore.runDBSCAN(0.5, 5);

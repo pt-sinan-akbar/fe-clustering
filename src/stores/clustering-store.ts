@@ -207,8 +207,8 @@ export const useClusteringStore = defineStore('clustering', () => {
         await runClustering('K-Means', { n_clusters, random_state })
     }
 
-    const runKPrototypes = async (n_clusters: number = 3, random_state: number = 42) => {
-        await runClustering('K-Prototypes', { n_clusters, random_state })
+    const runKPrototypes = async (n_clusters: number = 3, random_state: number = 42, init: "huang", gamma: 1.0, metric1="euclidean", metric2="euclidean") => {
+        await runClustering('K-Prototypes', { n_clusters, random_state, init, gamma, metric1, metric2 })
     }
 
     const runDBSCAN = async (eps: number = 0.5, min_samples: number = 5) => {
