@@ -24,11 +24,11 @@ const createPlot = () => {
     const clusters = [...new Set(props.rfmData.map(item => item.cluster))]
     
     const clusterColors = {
-        '-1': '#f26b8d', 
-        '0': '#f7a070',  
-        '1': '#f38a7b',  
-        '2': '#1a73a9',  
-        '3': '#74a6a5'   
+        '-1': '#E33F52', 
+        '0': '#372D41',  
+        '1': '#427ACF',  
+        '2': '#EEBF4C',  
+        '3': '#2ECC40'  
     }
 
     const traces = clusters.map(clusterVal => {
@@ -42,13 +42,13 @@ const createPlot = () => {
             type: 'scatter3d',
             name: `Cluster ${clusterVal}`,
             marker: {
-                size: 8,
+                size: 5,
+                opacity: 1,
                 color: clusterColors[clusterVal as keyof typeof clusterColors],
                 line: {
-                    color: 'rgba(217, 217, 217, 0.14)',
-                    width: 0.5
+                    color: 'rgba(200, 200, 200, 0.1)',
+                    width: 0.1
                 },
-                opacity: 0.8
             },
             text: clusterData.map(item => 
                 `Customer: ${item.id}<br>` +
