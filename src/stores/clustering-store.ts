@@ -119,11 +119,14 @@ export const useClusteringStore = defineStore('clustering', {
             return getClusterForCustomer(customer, algorithm);
         },
 
-        // Helper method to get algorithm_id by name
         getAlgorithmIdByName(algorithmName: string): number | null {
-            const algorithm = this.algorithms.find(algo => 
-                algo.name.toLowerCase() === algorithmName.toLowerCase()
-            );
+            const normalizedSearch = algorithmName.toLowerCase().replace(/-/g, '');
+            
+            const algorithm = this.algorithms.find(algo => {
+                const normalizedName = algo.name.toLowerCase().replace(/-/g, '');
+                return normalizedName === normalizedSearch;
+            });
+            
             return algorithm ? algorithm.id : null;
         },
 
