@@ -36,11 +36,11 @@ const evaluationMetrics = [
 ]
 
 const systemSpecs = [
-    { component: 'RAM', spec: '256GB DDR4', icon: '💾' },
-    { component: 'Storage', spec: '512GB NVMe SSD', icon: '💿' },
-    { component: 'OS', spec: 'Linux', icon: '🖱️' },
-    { component: 'Python', spec: 'Python 3.11.5', icon: '🐍' },
-    { component: 'Processor', spec: 'Intel Core i7-12700H', icon: '🖥️' },
+    { component: 'RAM', spec: '128GB', icon: '💾' },
+    { component: 'Storage', spec: '20GB HDD', icon: '💿' },
+    { component: 'OS', spec: 'Ubuntu 24.04', icon: '🖱️' },
+    { component: 'Python', spec: 'Python 3.11', icon: '🐍' },
+    { component: 'Processor', spec: 'Intel Xeon Platinum 8488C @3.796GHz', icon: '🖥️' },
 ]
 
 const objectives = [
@@ -96,7 +96,7 @@ const keyFindings = [
                 <!-- Title - Full Width -->
                 <div class="col-span-5 row-span-2 h-full w-full">
                     <GlassMorphismContainer class="overflow-hidden flex justify-center items-center h-full">
-                        <h2 class="text-4xl font-bold text-pink-800/70 mb-3 flex items-center">
+                        <h2 class="text-4xl font-bold text-pink-800/80 mb-3 flex items-center">
                             <span class="mr-2">📚</span> Clustering Algorithms Comparison
                         </h2>
                     </GlassMorphismContainer>
@@ -106,25 +106,25 @@ const keyFindings = [
                 <div class="row-start-3 row-span-3 h-full w-full">
                     <GlassMorphismContainer
                         class="overflow-hidden flex flex-col justify-center items-center h-full w-full p-4">
-                        <h3 class="text-sm font-bold text-pink-800/70 mb-3 flex items-center w-full justify-center">
-                            <span class="mr-2">📊</span> Dataset Info
+                        <h3 class="text-sm font-bold text-pink-800/80 mb-3 flex items-center w-full justify-center">
+                            <span class="mr-2 text-lg">📊Dataset Info</span>
                         </h3>
                         <div class="grid grid-cols-3 gap-2 mb-3 w-full justify-evenly px-10">
                             <div class="text-center">
-                                <p class="text-lg font-bold text-pink-600/70">93,335</p>
-                                <p class="text-xs text-pink-600/70">Points</p>
+                                <p class="text-lg font-bold text-pink-600/80">93,335</p>
+                                <p class="text-md text-pink-600/80">Points</p>
                             </div>
                             <div class="text-center">
-                                <p class="text-lg font-bold text-pink-600/70">RFM+D</p>
-                                <p class="text-xs text-pink-600/70">Features</p>
+                                <p class="text-lg font-bold text-pink-600/80">RFM+D</p>
+                                <p class="text-md text-pink-600/80">Features</p>
                             </div>
                             <div class="text-center">
-                                <p class="text-lg font-bold text-pink-600/70">Mixed</p>
-                                <p class="text-xs text-pink-600/70">Type</p>
+                                <p class="text-lg font-bold text-pink-600/80">Mixed</p>
+                                <p class="text-md text-pink-600/80">Type</p>
                             </div>
                         </div>
                         <GlassMorphismContainer class="p-2">
-                            <p class="text-xs text-pink-600/70 text-center">
+                            <p class="text-xs text-pink-600/80 text-center">
                                 <strong>R</strong>ecency, <strong>F</strong>requency, <strong>M</strong>onetary,
                                 <strong>D</strong>uration
                             </p>
@@ -135,8 +135,8 @@ const keyFindings = [
                 <!-- Algorithms Used -->
                 <div class="col-span-2 row-span-5 col-start-2 row-start-3">
                     <GlassMorphismContainer class="overflow-hidden flex flex-col w-full h-full p-4">
-                        <h3 class="text-sm font-bold text-pink-800/70 mb-3 flex items-center">
-                            <span class="mr-2">🔬</span> Algorithms Used
+                        <h3 class="text-sm font-bold text-pink-800/80 mb-3 flex items-center">
+                            <span class="mr-2 text-lg">🔬Algorithms Used</span>
                         </h3>
                         <div class="flex flex-col gap-2 flex-1 w-full">
                             <div v-for="i in Math.ceil(algorithms.length / 2)" :key="i"
@@ -145,9 +145,9 @@ const keyFindings = [
                                     :key="algorithm.name" class="p-2 flex-1 flex flex-col items-center justify-center">
                                     <div class="flex items-center gap-2 mb-1 w-full justify-center">
                                         <span class="text-lg">{{ algorithm.icon }}</span>
-                                        <p class="text-xs font-semibold text-pink-800/70">{{ algorithm.name }}</p>
+                                        <p class="text-md font-semibold text-pink-800/80">{{ algorithm.name }}</p>
                                     </div>
-                                    <p class="text-xs text-pink-600/70 line-clamp-2">{{ algorithm.description }}</p>
+                                    <p class="text-xs text-pink-600/80 line-clamp-2">{{ algorithm.description }}</p>
                                 </GlassMorphismContainer>
                             </div>
                         </div>
@@ -157,17 +157,17 @@ const keyFindings = [
                 <!-- Methodology -->
                 <div class="row-span-5 col-start-4 row-start-3 h-full w-full">
                     <GlassMorphismContainer class="overflow-hidden h-full w-full p-4 flex flex-col">
-                        <h3 class="text-sm font-bold text-pink-800/70 mb-3 flex items-center">
-                            <span class="mr-2">🔄</span> Methodology
+                        <h3 class="text-sm font-bold text-pink-800/80 mb-3 flex items-center">
+                            <span class="mr-2 text-lg">🔄Methodology</span> 
                         </h3>
                         <div class="flex flex-col gap-3 flex-1 w-full">
                             <GlassMorphismContainer v-for="method in methodology" :key="method.step"
                                 class="p-2 flex-1 flex flex-col items-center justify-center">
                                 <div class="flex items-center gap-2 mb-1 w-full justify-center">
                                     <span class="text-lg">{{ method.icon }}</span>
-                                    <p class="text-xs font-semibold text-pink-800/70">{{ method.step }}</p>
+                                    <p class="text-md font-semibold text-pink-800/80">{{ method.step }}</p>
                                 </div>
-                                <p class="text-xs text-pink-600/70 line-clamp-2">{{ method.description }}</p>
+                                <p class="text-xs text-pink-600/80 line-clamp-2">{{ method.description }}</p>
                             </GlassMorphismContainer>
                         </div>
                     </GlassMorphismContainer>
@@ -176,13 +176,13 @@ const keyFindings = [
                 <!-- Objectives -->
                 <div class="row-span-5 col-start-5 row-start-3 h-full w-full">
                     <GlassMorphismContainer class="overflow-hidden h-full w-full p-4 flex flex-col">
-                        <h3 class="text-sm font-bold text-pink-800/70 mb-3 flex items-center">
-                            <span class="mr-2">🎯</span> Objectives
+                        <h3 class="text-sm font-bold text-pink-800/80 mb-3 flex items-center">
+                            <span class="mr-2 text-lg">🎯Objectives</span>
                         </h3>
                         <div class="flex flex-col gap-2 flex-1 w-full">
                             <GlassMorphismContainer v-for="(objective, index) in objectives" :key="index"
                                 class="p-4 flex-1 flex flex-col items-center justify-center">
-                                <span class="text-xs text-pink-800/70 line-clamp-2 w-full">🎯 {{ objective }}</span>
+                                <span class="text-xs text-pink-800/80 w-full">🎯 {{ objective }}</span>
                             </GlassMorphismContainer>
                         </div>
                     </GlassMorphismContainer>
@@ -191,8 +191,8 @@ const keyFindings = [
                 <!-- System Specs -->
                 <div class="row-span-4 col-start-1 row-start-6 w-full h-full">
                     <GlassMorphismContainer class="overflow-hidden h-full w-full p-4 flex flex-col">
-                        <h3 class="text-sm font-bold text-pink-800/70 mb-3 flex items-center w-full justify-center">
-                            <span class="mr-2">⚙️</span> System Specs
+                        <h3 class="text-sm font-bold text-pink-800/80 mb-3 flex items-center w-full justify-center">
+                            <span class="mr-2 text-lg">⚙️System Specs</span>
                         </h3>
                         <div class="flex flex-col gap-2 flex-1 w-full">
                             <div v-for="i in Math.ceil(systemSpecs.length / 2)" :key="i" class="flex gap-2 flex-1">
@@ -200,9 +200,9 @@ const keyFindings = [
                                     :key="spec.component" class="p-2 flex-1 flex flex-col items-center justify-center">
                                     <div class="flex items-center gap-2 mb-1 w-full justify-center">
                                         <span class="text-lg">{{ spec.icon }}</span>
-                                        <p class="text-xs font-semibold text-pink-800/70">{{ spec.component }}</p>
+                                        <p class="text-xs font-bold text-pink-800/80">{{ spec.component }}</p>
                                     </div>
-                                    <p class="text-xs text-pink-600/70 line-clamp-2">{{ spec.spec }}</p>
+                                    <p class="text-xs font-semibold text-pink-600/80 line-clamp-2">{{ spec.spec }}</p>
                                 </GlassMorphismContainer>
                             </div>
                         </div>
@@ -212,7 +212,7 @@ const keyFindings = [
                 <!-- Evaluation Metrics -->
                 <div class="row-span-2 col-span-2 col-start-2 row-start-8 h-full w-full">
                     <GlassMorphismContainer class="overflow-hidden h-full w-full p-4 flex flex-col">
-                        <h3 class="text-sm font-bold text-pink-800/70 mb-3 flex items-center">
+                        <h3 class="text-lg font-bold text-pink-800/80 mb-3 flex items-center">
                             <span class="mr-2">📈</span> Evaluation Metrics
                         </h3>
                         <div class="grid grid-cols-3 gap-2 flex-1">
@@ -220,9 +220,10 @@ const keyFindings = [
                                 class="p-2 flex-1 flex flex-col items-center justify-center">
                                 <div class="flex items-center gap-2 mb-2 w-full justify-center">
                                     <span class="text-lg">{{ metric.icon }}</span>
-                                    <p class="text-xs font-semibold text-pink-800/70">{{ metric.name }}</p>
+                                    <p class="text-md font-semibold text-pink-800/80">{{ metric.name }}</p>
                                 </div>
-                                <p class="text-xs text-pink-600/70 line-clamp-2">{{ metric.description }}</p>
+                                <p class="text-xs text-center text-pink-600/80 line-clamp-2">{{ metric.description }}
+                                </p>
                             </GlassMorphismContainer>
                         </div>
                     </GlassMorphismContainer>
@@ -231,21 +232,29 @@ const keyFindings = [
                 <!-- Key Findings -->
                 <div class="row-span-2 col-span-2 col-start-4 row-start-8 h-full w-full">
                     <GlassMorphismContainer class="overflow-hidden h-full w-full p-4 flex flex-col">
-                        <h3 class="text-sm font-bold text-pink-800/70 mb-3 flex items-center">
-                            <span class="mr-2">🏆</span> Key Findings
+                        <h3 class="text-lg font-bold text-pink-800/80 mb-3 flex items-center">
+                            <span class="mr-2">🏆</span> Key Findings (DBSCAN)
                         </h3>
                         <div class="flex flex-row gap-2 flex-1">
-                            <GlassMorphismContainer
-                                v-for="result in keyFindings[0].results"
-                                :key="result.label"
-                                class="p-2 flex-1 flex flex-col items-center justify-center"
-                            >
-                                <div class="flex items-center mb-1 w-full justify-center gap-1">
-                                    <span class="text-lg">{{ result.icon }}</span>
-                                    <p class="text-xs font-semibold text-pink-800/70">{{ result.label }}</p>
-                                </div>
-                                <p class="text-xs text-pink-600/70 line-clamp-2">{{ result.description }}</p>
-                            </GlassMorphismContainer>
+                            <div class="flex flex-row gap-2 flex-1">
+                                <GlassMorphismContainer
+                                    v-for="result in keyFindings[0].results"
+                                    :key="result.label"
+                                    class="p-2 flex-1 flex flex-col items-center justify-center relative overflow-visible"
+                                >
+                                    <span
+                                        class="text-2xl absolute -top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none"
+                                        style="pointer-events: none;"
+                                        aria-hidden="true"
+                                    >
+                                        {{ result.icon }}
+                                    </span>
+                                    <div class="flex items-center mb-1 w-full justify-center gap-1 mt-0">
+                                        <p class="text-md font-semibold text-pink-800/80">{{ result.label }}</p>
+                                    </div>
+                                    <p class="text-xs text-center text-pink-600/80 line-clamp-2">{{ result.description }}</p>
+                                </GlassMorphismContainer>
+                            </div>
                         </div>
                     </GlassMorphismContainer>
                 </div>
