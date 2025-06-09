@@ -34,7 +34,6 @@
                             dataKey="id" filterDisplay="menu" :loading="loading" size="medium"
                             :globalFilterFields="['id', 'recency', 'frequency', 'monetary', 'state', 'cluster']"
                             class="max-w-full max-h-full h-full w-full flex flex-col" tableStyle="font-size: 12px;">
-                            <!-- <template #empty> No customers found. </template> -->
                             <template #loading> Loading customers data. Please wait. </template>
                             <Column field="id" header="Customer ID" style="min-width: 6rem">
                                 <template #body="{ data }">
@@ -96,7 +95,6 @@
                         class="overflow-hidden border w-full h-full flex justify-center items-center">
                         <DataTable :value="clustering_results" removableSort size="medium" :loading="loading" tableStyle="font-size: 12px"
                             class="max-w-full max-h-full h-full w-full">
-                            <!-- <template #empty> No cluster results data found </template> -->
                             <template #loading> Loading cluster results data. Please wait. </template>
                             <Column field="cluster" header="Cluster" sortable style="width: 12.5%"></Column>
                             <Column field="customer_count" header="Count" sortable style="width: 12.5%"></Column>
@@ -115,7 +113,7 @@
                 </GlassMorphismContainer>
                 <div class="col-span-6 col-start-7 row-start-1 h-full w-full flex items-center justify-between">
                     <h1 class="text-5xl font-bold text-pink-800/70 h-full flex items-center justify-center">
-                        {{ algorithm_name }} Clustering
+                        {{ formatAlgorithmName(algorithm_name) }} Clustering
                     </h1>
                     <div class="col-span-2 col-start-11 row-start-1 h-full flex flex-col items-end justify-center">
                         <p class="text-md font-semibold text-pink-800/70">Algorithm Parameters</p>
@@ -143,7 +141,7 @@ import InputNumber from 'primevue/inputnumber';
 import RFMScatterPlot from '@/components/RFMScatterPlot.vue';
 import { useClusteringStore } from '@/stores/clustering-store';
 import { storeToRefs } from 'pinia';
-import { formatCurrency, formatDecimal } from '@/utils/utils';
+import { formatCurrency, formatDecimal, formatAlgorithmName } from '@/utils/utils';
 
 interface Props {
     algorithm: 'kmeans' | 'kprototypes' | 'dbscan' | 'hierarchical' | 'gmm';
@@ -175,51 +173,26 @@ const silhouette = computed(() => getCurrentAlgorithmData.value?.metrics?.silhou
 const davies_bouldin = computed(() => getCurrentAlgorithmData.value?.metrics?.davies_bouldin)
 
 onMounted(async () => {
-    try {
-        loading.value = true;
-        if (currentAlgorithm.value) {
-            await runAlgorithm(currentAlgorithm.value);
-        }
-    } catch (error) {
-        console.error('Failed to initialize clustering:', error);
-    } finally {
-        loading.value = false;
+    if (currentAlgorithm.value) {
+        await loadAlgorithmData(currentAlgorithm.value);
     }
 });
 
-const runAlgorithm = async (algorithm: string) => {
-    switch (algorithm) {
-        case 'kmeans':
-            await clusteringStore.runKMeans(4, 42);
-            break;
-        case 'kprototypes':
-            await clusteringStore.runKPrototypes(4, 42, 'huang', 1.0, 'euclidean', 'euclidean');
-            break;
-        case 'dbscan':
-            await clusteringStore.runDBSCAN(0.5, 5);
-            break;
-        case 'hierarchical':
-            await clusteringStore.runHierarchical(4, 'ward');
-            break;
-        case 'gmm':
-            await clusteringStore.runGaussianMixture(4, 42);
-            break;
-        default:
-            console.warn('Unknown algorithm:', algorithm);
+const loadAlgorithmData = async (algorithm: string) => {
+    try {
+        loading.value = true;
+        await clusteringStore.switchToAlgorithm(algorithm);
+    } catch (error) {
+        console.error('Failed to load algorithm data:', error);
+    } finally {
+        loading.value = false;
     }
 };
 
-
+// Watch for algorithm changes
 watch(currentAlgorithm, async (newAlgorithm) => {
     if (newAlgorithm) {
-        try {
-            loading.value = true;
-            await runAlgorithm(newAlgorithm);
-        } catch (error) {
-            console.error('Failed to run algorithm:', error);
-        } finally {
-            loading.value = false;
-        }
+        await loadAlgorithmData(newAlgorithm);
     }
 }, { immediate: true });
 

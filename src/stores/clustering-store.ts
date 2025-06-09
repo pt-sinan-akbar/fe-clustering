@@ -1,14 +1,21 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
 
-// Types
+interface Algorithm {
+    id: number
+    name: string
+}
+
 interface Customer {
     id: string
     recency: number
     frequency: number
     monetary: number
     state: string
-    cluster: number
+    dbscan_cluster: number;
+    hierarchical_cluster: number;
+    gmm_cluster: number;
+    kmeans_cluster: number;
+    kprototypes_cluster: number;
 }
 
 interface ClusteringResult {
@@ -28,403 +35,257 @@ interface AlgorithmParameter {
     type: 'number' | 'string' | 'boolean'
 }
 
+interface MetricResult {
+    id: number
+    algorithm_id: number
+    metric_name: string
+    metric_value: number
+}
+
 interface ClusteringMetrics {
     silhouette: number | null
     calinski_harabasz: number | null
     davies_bouldin: number | null
 }
 
-interface AlgorithmOverview {
-    algorithm: string
-    customers: Customer[]
-    parameters: AlgorithmParameter[]
+interface CustomerWithCluster extends Customer {
+    cluster: number;
+}
+
+interface ClusteringData {
+    algorithm: string;
+    customers: CustomerWithCluster[]
+    results: ClusteringResult[]
     metrics: ClusteringMetrics | null
-    results: ClusteringResult[]
-    loading: boolean
-    error: string | null
-    lastUpdated: Date | null
+    parameters: AlgorithmParameter[]
 }
 
-interface ApiResponse {
-    customers: Customer[]
-    metrics: ClusteringMetrics
-    results: ClusteringResult[]
+function getClusterForCustomer(customer: Customer, algorithm: string): number {
+    switch (algorithm.toLowerCase()) {
+        case 'dbscan':
+            return customer.dbscan_cluster;
+        case 'hierarchical':
+            return customer.hierarchical_cluster;
+        case 'gmm':
+            return customer.gmm_cluster;
+        case 'kmeans':
+            return customer.kmeans_cluster;
+        case 'kprototypes':
+            return customer.kprototypes_cluster;
+        default:
+            return 0;
+    }
 }
 
-export const useClusteringStore = defineStore('clustering', () => {
-    // State
-    const algorithms = ref<Record<string, AlgorithmOverview>>({})
-    const currentAlgorithm = ref<string>('')
-    const globalLoading = ref<boolean>(false)
+export const useClusteringStore = defineStore('clustering', {
+    state: () => ({
+        currentAlgorithm: '',
+        currentAlgorithmId: null as number | null,
+        algorithms: [] as Algorithm[],
+        customersData: [] as Customer[], 
+        isCustomersDataFetched: false, 
 
-    // Getters
-    const getAlgorithmOverview = computed(() => {
-        return (algorithm: string): AlgorithmOverview | null => {
-            return algorithms.value[algorithm] || null
+        algorithmData: new Map<number, {
+            results: ClusteringResult[]
+            metrics: ClusteringMetrics | null
+            parameters: AlgorithmParameter[]
+        }>(),
+    }),
+
+    getters: {
+        getCurrentAlgorithmData(): ClusteringData | null {
+            if (!this.currentAlgorithm || !this.currentAlgorithmId) return null;
+            
+            const algorithmSpecificData = this.algorithmData.get(this.currentAlgorithmId);
+            if (!algorithmSpecificData) return null;
+
+            const customersWithCluster: CustomerWithCluster[] = this.customersData.map(customer => ({
+                ...customer,
+                cluster: getClusterForCustomer(customer, this.currentAlgorithm)
+            }));
+
+            return {
+                algorithm: this.currentAlgorithm,
+                customers: customersWithCluster,
+                results: algorithmSpecificData.results,
+                metrics: algorithmSpecificData.metrics,
+                parameters: algorithmSpecificData.parameters
+            };
         }
-    })
+    },
 
-    const getAllAlgorithms = computed((): AlgorithmOverview[] => {
-        return Object.values(algorithms.value)
-    })
+    actions: {
+        getClusterForCustomer(customer: Customer, algorithm: string): number {
+            return getClusterForCustomer(customer, algorithm);
+        },
 
-    const getCurrentAlgorithmData = computed((): AlgorithmOverview | null => {
-        if (!currentAlgorithm.value) return null
-        return algorithms.value[currentAlgorithm.value] || null
-    })
+        // Helper method to get algorithm_id by name
+        getAlgorithmIdByName(algorithmName: string): number | null {
+            const algorithm = this.algorithms.find(algo => 
+                algo.name.toLowerCase() === algorithmName.toLowerCase()
+            );
+            return algorithm ? algorithm.id : null;
+        },
 
-    const getAlgorithmCount = computed((): number => {
-        return Object.keys(algorithms.value).length
-    })
-
-    const getCompletedAlgorithms = computed((): AlgorithmOverview[] => {
-        return Object.values(algorithms.value).filter(algo =>
-            !algo.loading && algo.customers.length > 0
-        )
-    })
-
-    // API Mock (replace with actual API calls)
-    const api = {
-        runClustering: async (config: {
-            algorithm: string;
-            parameters?: Record<string, any>
-        }): Promise<ApiResponse> => {
-            // Simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000))
-
-            // Mock response data with more realistic clustering results
-            const clusterCount = config.algorithm === 'DBSCAN' ? 4 : 3
-            const totalCustomers = 100 + Math.floor(Math.random() * 400)
-
-            const customers: Customer[] = Array.from({ length: totalCustomers }, (_, i) => ({
-                id: `CUST_${String(i + 1).padStart(4, '0')}`,
-                recency: Math.floor(Math.random() * 365) + 1,
-                frequency: Math.floor(Math.random() * 50) + 1,
-                monetary: Math.floor(Math.random() * 5000) + 100,
-                state: ['mid_west', 'north', 'northeast', 'south', 'southeast'][Math.floor(Math.random() * 5)],
-                cluster: Math.floor(Math.random() * clusterCount)
-            }))
-
-            const results: ClusteringResult[] = Array.from({ length: clusterCount }, (_, i) => {
-                const clusterCustomers = customers.filter(c => c.cluster === i)
-                const clusterSize = clusterCustomers.length
-
-                return {
-                    cluster: i,
-                    customer_count: clusterSize,
-                    percentage: (clusterSize / totalCustomers) * 100,
-                    mid_west: clusterCustomers.filter(c => c.state === 'mid_west').length,
-                    north: clusterCustomers.filter(c => c.state === 'north').length,
-                    northeast: clusterCustomers.filter(c => c.state === 'northeast').length,
-                    south: clusterCustomers.filter(c => c.state === 'south').length,
-                    southeast: clusterCustomers.filter(c => c.state === 'southeast').length
-                }
-            })
-
-            const metrics: ClusteringMetrics = {
-                silhouette: Math.random() * 0.8 + 0.2, // 0.2 to 1.0
-                calinski_harabasz: Math.random() * 500 + 100, // 100 to 600
-                davies_bouldin: Math.random() * 2 + 0.5 // 0.5 to 2.5
+        async fetchCustomersData() {
+            if (this.isCustomersDataFetched) {
+                return; 
             }
 
-            return { customers, metrics, results }
-        }
-    }
-
-    // Actions
-    const setCurrentAlgorithm = (algorithm: string) => {
-        currentAlgorithm.value = algorithm
-    }
-
-    const initializeAlgorithm = (algorithm: string) => {
-        if (!algorithms.value[algorithm]) {
-            algorithms.value[algorithm] = {
-                algorithm,
-                customers: [],
-                parameters: [],
-                metrics: null,
-                results: [],
-                loading: false,
-                error: null,
-                lastUpdated: null
+            try {
+                const customersResponse = await fetch('http://localhost:8000/api/v1/clustering/customers');
+                const customersData = await customersResponse.json();
+                this.customersData = customersData;
+                this.isCustomersDataFetched = true;
+            } catch (error) {
+                console.error('Error fetching customers data:', error);
+                throw error;
             }
-        }
-    }
+        },
 
-    const setAlgorithmLoading = (algorithm: string, loading: boolean) => {
-        initializeAlgorithm(algorithm)
-        algorithms.value[algorithm].loading = loading
-    }
-
-    const setAlgorithmError = (algorithm: string, error: string | null) => {
-        initializeAlgorithm(algorithm)
-        algorithms.value[algorithm].error = error
-    }
-
-    const runClustering = async (
-        algorithm: string,
-        parameters: Record<string, any> = {}
-    ): Promise<void> => {
-        try {
-            initializeAlgorithm(algorithm)
-            setAlgorithmLoading(algorithm, true)
-            setAlgorithmError(algorithm, null)
-            globalLoading.value = true
-
-            const response = await api.runClustering({ algorithm, parameters })
-
-            // Convert parameters to the expected format
-            const formattedParameters: AlgorithmParameter[] = Object.entries(parameters).map(([name, value]) => ({
-                name,
-                value,
-                type: typeof value as 'number' | 'string' | 'boolean'
-            }))
-
-            algorithms.value[algorithm] = {
-                algorithm,
-                customers: response.customers,
-                parameters: formattedParameters,
-                metrics: response.metrics,
-                results: response.results,
-                loading: false,
-                error: null,
-                lastUpdated: new Date()
+        async fetchAlgorithmsData() {
+            if (this.algorithms.length > 0) {
+                return; 
             }
 
-            setCurrentAlgorithm(algorithm)
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-            setAlgorithmError(algorithm, errorMessage)
-            console.error(`Error running ${algorithm}:`, error)
-        } finally {
-            setAlgorithmLoading(algorithm, false)
-            globalLoading.value = false
-        }
-    }
-
-    // Specific algorithm runners
-    const runKMeans = async (n_clusters: number = 3, random_state: number = 42) => {
-        await runClustering('K-Means', { n_clusters, random_state })
-    }
-
-    const runKPrototypes = async (n_clusters: number = 3, random_state: number = 42, init: "huang", gamma: 1.0, metric1="euclidean", metric2="euclidean") => {
-        await runClustering('K-Prototypes', { n_clusters, random_state, init, gamma, metric1, metric2 })
-    }
-
-    const runDBSCAN = async (eps: number = 0.5, min_samples: number = 5) => {
-        await runClustering('DBSCAN', { eps, min_samples })
-    }
-
-    const runHierarchical = async (n_clusters: number = 3, linkage: string = 'ward') => {
-        await runClustering('Hierarchical', { n_clusters, linkage })
-    }
-
-    const runGaussianMixture = async (n_components: number = 3, random_state: number = 42) => {
-        await runClustering('Gaussian Mixture', { n_components, random_state })
-    }
-
-    // Data manipulation methods
-    const clearAlgorithm = (algorithm: string) => {
-        if (algorithms.value[algorithm]) {
-            delete algorithms.value[algorithm]
-            if (currentAlgorithm.value === algorithm) {
-                currentAlgorithm.value = ''
+            try {
+                const algorithmsResponse = await fetch('http://localhost:8000/api/v1/clustering/algorithms');
+                const algorithmsData = await algorithmsResponse.json();
+                this.algorithms = algorithmsData;
+            } catch (error) {
+                console.error('Error fetching algorithms data:', error);
+                throw error;
             }
-        }
-    }
+        },
 
-    const clearAllAlgorithms = () => {
-        algorithms.value = {}
-        currentAlgorithm.value = ''
-    }
-
-    const updateAlgorithmMetrics = (algorithm: string, metrics: ClusteringMetrics) => {
-        if (algorithms.value[algorithm]) {
-            algorithms.value[algorithm].metrics = metrics
-            algorithms.value[algorithm].lastUpdated = new Date()
-        }
-    }
-
-    const updateCustomerCluster = (algorithm: string, customerId: string, newCluster: number) => {
-        const algorithmData = algorithms.value[algorithm]
-        if (!algorithmData) return
-
-        const customer = algorithmData.customers.find(c => c.id === customerId)
-        if (customer) {
-            customer.cluster = newCluster
-            recalculateResults(algorithm)
-        }
-    }
-
-    const recalculateResults = (algorithm: string) => {
-        const algorithmData = algorithms.value[algorithm]
-        if (!algorithmData) return
-
-        const clusterCounts: Record<number, number> = {}
-        const stateCounts: Record<number, Record<string, number>> = {}
-
-        // Count customers per cluster and state distribution
-        algorithmData.customers.forEach(customer => {
-            const cluster = customer.cluster
-            clusterCounts[cluster] = (clusterCounts[cluster] || 0) + 1
-
-            if (!stateCounts[cluster]) {
-                stateCounts[cluster] = {
-                    mid_west: 0,
-                    north: 0,
-                    northeast: 0,
-                    south: 0,
-                    southeast: 0
-                }
+        async fetchAlgorithmSpecificData(algorithmId: number) {
+            if (this.algorithmData.has(algorithmId)) {
+                return; 
             }
 
-            if (stateCounts[cluster][customer.state] !== undefined) {
-                stateCounts[cluster][customer.state]++
+            try {
+                const [resultsResponse, metricsResponse, paramsResponse] = await Promise.all([
+                    fetch(`http://localhost:8000/api/v1/clustering/clustering-results/${algorithmId}`),
+                    fetch(`http://localhost:8000/api/v1/clustering/metric-results/${algorithmId}`),
+                    fetch(`http://localhost:8000/api/v1/clustering/parameters/${algorithmId}`)
+                ]);
+
+                const [resultsData, metricsData, paramsData] = await Promise.all([
+                    resultsResponse.json(),
+                    metricsResponse.json(),
+                    paramsResponse.json()
+                ]);
+
+                console.log(`Metrics for algorithm ID ${algorithmId}:`, metricsData);
+
+                const metric_data: ClusteringMetrics = {
+                    silhouette: null,
+                    calinski_harabasz: null,
+                    davies_bouldin: null
+                };
+
+                (metricsData as MetricResult[]).forEach(metric => {
+                    if (metric.metric_name === 'silhouette_score') {
+                        metric_data.silhouette = parseFloat(metric.metric_value.toFixed(4));
+                    } else if (metric.metric_name === 'calinski_harabasz_score') {
+                        metric_data.calinski_harabasz = parseFloat(metric.metric_value.toFixed(2));
+                    }
+                    else if (metric.metric_name === 'davies_bouldin_score') {
+                        metric_data.davies_bouldin = parseFloat(metric.metric_value.toFixed(2));
+                    }
+                });
+
+                this.algorithmData.set(algorithmId, {
+                    results: resultsData,
+                    metrics: metric_data,
+                    parameters: paramsData
+                });
+
+            } catch (error) {
+                console.error(`Error fetching data for algorithm ID ${algorithmId}:`, error);
+                throw error;
             }
-        })
+        },
 
-        const totalCustomers = algorithmData.customers.length
-
-        // Update results
-        algorithmData.results = Object.entries(clusterCounts).map(([cluster, count]) => ({
-            cluster: parseInt(cluster),
-            customer_count: count,
-            percentage: (count / totalCustomers) * 100,
-            mid_west: stateCounts[parseInt(cluster)].mid_west,
-            north: stateCounts[parseInt(cluster)].north,
-            northeast: stateCounts[parseInt(cluster)].northeast,
-            south: stateCounts[parseInt(cluster)].south,
-            southeast: stateCounts[parseInt(cluster)].southeast
-        }))
-
-        algorithmData.lastUpdated = new Date()
-    }
-
-    // Utility getters for specific algorithm data
-    const getAlgorithmMetrics = (algorithm: string): ClusteringMetrics | null => {
-        return algorithms.value[algorithm]?.metrics || null
-    }
-
-    const getAlgorithmResults = (algorithm: string): ClusteringResult[] => {
-        return algorithms.value[algorithm]?.results || []
-    }
-
-    const getAlgorithmCustomers = (algorithm: string): Customer[] => {
-        return algorithms.value[algorithm]?.customers || []
-    }
-
-    const getAlgorithmParameters = (algorithm: string): AlgorithmParameter[] => {
-        return algorithms.value[algorithm]?.parameters || []
-    }
-
-    const getClusterDistribution = (algorithm: string): Record<number, number> => {
-        const results = getAlgorithmResults(algorithm)
-        return results.reduce((acc, result) => {
-            acc[result.cluster] = result.customer_count
-            return acc
-        }, {} as Record<number, number>)
-    }
-
-    const getStateDistribution = (algorithm: string): Record<number, Record<string, number>> => {
-        const results = getAlgorithmResults(algorithm)
-        return results.reduce((acc, result) => {
-            acc[result.cluster] = {
-                mid_west: result.mid_west,
-                north: result.north,
-                northeast: result.northeast,
-                south: result.south,
-                southeast: result.southeast
+        async initializeData() {
+            try {
+                await Promise.all([
+                    this.fetchAlgorithmsData(),
+                    this.fetchCustomersData()
+                ]);
+            } catch (error) {
+                console.error('Error initializing base data:', error);
+                throw error;
             }
-            return acc
-        }, {} as Record<number, Record<string, number>>)
-    }
+        },
 
-    // Export functionality
-    const exportAlgorithmResults = (algorithm: string) => {
-        const algorithmData = algorithms.value[algorithm]
-        if (!algorithmData) return
-
-        const exportData = {
-            algorithm: algorithmData.algorithm,
-            parameters: algorithmData.parameters,
-            metrics: algorithmData.metrics,
-            customers: algorithmData.customers,
-            results: algorithmData.results,
-            summary: {
-                total_customers: algorithmData.customers.length,
-                cluster_count: algorithmData.results.length,
-                last_updated: algorithmData.lastUpdated
+        async switchToAlgorithm(algorithmName: string) {
+            this.currentAlgorithm = algorithmName;
+            
+            await this.initializeData();
+            
+            // Get algorithm_id by name
+            const algorithmId = this.getAlgorithmIdByName(algorithmName);
+            if (!algorithmId) {
+                throw new Error(`Algorithm '${algorithmName}' not found`);
             }
+            
+            this.currentAlgorithmId = algorithmId;
+            await this.fetchAlgorithmSpecificData(algorithmId);
+        },
+
+        // Alternative method to switch by algorithm_id directly
+        async switchToAlgorithmById(algorithmId: number) {
+            await this.initializeData();
+            
+            // Find algorithm name by ID
+            const algorithm = this.algorithms.find(algo => algo.id === algorithmId);
+            if (!algorithm) {
+                throw new Error(`Algorithm with ID ${algorithmId} not found`);
+            }
+            
+            this.currentAlgorithm = algorithm.name;
+            this.currentAlgorithmId = algorithmId;
+            await this.fetchAlgorithmSpecificData(algorithmId);
+        },
+
+        async runKMeans() {
+            await this.switchToAlgorithm('kmeans');
+        },
+
+        async runKPrototypes() {
+            await this.switchToAlgorithm('kprototypes');
+        },
+
+        async runDBSCAN() {
+            await this.switchToAlgorithm('dbscan');
+        },
+
+        async runHierarchical() {
+            await this.switchToAlgorithm('hierarchical');
+        },
+
+        async runGaussianMixture() {
+            await this.switchToAlgorithm('gmm');
+        },
+
+        async preloadAllAlgorithmData() {
+            await this.initializeData();
+            
+            // Get all algorithm IDs from the fetched algorithms
+            const algorithmIds = this.algorithms.map(algo => algo.id);
+            
+            await Promise.all(
+                algorithmIds.map(algorithmId => this.fetchAlgorithmSpecificData(algorithmId))
+            );
+        },
+
+        clearCache() {
+            this.customersData = [];
+            this.isCustomersDataFetched = false;
+            this.algorithmData.clear();
+            this.algorithms = [];
+            this.currentAlgorithmId = null;
         }
-
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `${algorithm.toLowerCase().replace(/\s+/g, '-')}-clustering-results.json`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-    }
-
-    const exportAllResults = () => {
-        const exportData = {
-            algorithms: algorithms.value,
-            current_algorithm: currentAlgorithm.value,
-            export_timestamp: new Date().toISOString(),
-            summary: {
-                total_algorithms: getAlgorithmCount.value,
-                completed_algorithms: getCompletedAlgorithms.value.length
-            }
-        }
-
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `all-clustering-results-${new Date().toISOString().split('T')[0]}.json`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-    }
-
-    return {
-        // State
-        algorithms,
-        currentAlgorithm,
-        globalLoading,
-
-        // Getters
-        getAlgorithmOverview,
-        getAllAlgorithms,
-        getCurrentAlgorithmData,
-        getAlgorithmCount,
-        getCompletedAlgorithms,
-
-        // Actions
-        setCurrentAlgorithm,
-        runClustering,
-        runKMeans,
-        runDBSCAN,
-        runHierarchical,
-        runKPrototypes,
-        runGaussianMixture,
-        clearAlgorithm,
-        clearAllAlgorithms,
-        updateAlgorithmMetrics,
-        updateCustomerCluster,
-        recalculateResults,
-
-        // Utility methods
-        getAlgorithmMetrics,
-        getAlgorithmResults,
-        getAlgorithmCustomers,
-        getAlgorithmParameters,
-        getClusterDistribution,
-        getStateDistribution,
-        exportAlgorithmResults,
-        exportAllResults
     }
 })

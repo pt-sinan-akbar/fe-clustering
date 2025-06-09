@@ -5,7 +5,7 @@ import TheNavbar from './components/TheNavbar.vue'
 
 <template>
     <TheNavbar />
-    <div id="bg-wrap" class="fixed inset-0 overflow-hidden bg-red-800/30">
+    <div id="bg-wrap" class="fixed inset-0 overflow-hidden bg-slate-400">
         <svg viewBox="0 0 100 100" class="bg-white max-h-screen w-screen" preserveAspectRatio="xMidYMid slice">
             <defs>
                 <radialGradient id="Gradient1" cx="50%" cy="50%" fx="0.441602%" fy="50%" r=".5">
