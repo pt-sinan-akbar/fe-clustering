@@ -126,7 +126,7 @@ const keyFindings = [
                         <GlassMorphismContainer class="p-2">
                             <p class="text-xs text-pink-600/80 text-center">
                                 <strong>R</strong>ecency, <strong>F</strong>requency, <strong>M</strong>onetary,
-                                <strong>D</strong>uration
+                                <strong>D</strong>emography
                             </p>
                         </GlassMorphismContainer>
                     </GlassMorphismContainer>
