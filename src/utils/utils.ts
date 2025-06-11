@@ -18,7 +18,7 @@ export const formatAlgorithmName = (name: string): string => {
     }
 
     if (name.includes('hierarchical')) {
-        return 'Hierarchical Clustering';
+        return 'Hierarchical';
     }
 
     if (name.includes('gmm')) {

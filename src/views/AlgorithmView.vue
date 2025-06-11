@@ -112,7 +112,7 @@
                     </GlassMorphismContainer>
                 </GlassMorphismContainer>
                 <div class="col-span-6 col-start-7 row-start-1 h-full w-full flex items-center justify-between">
-                    <h1 class="text-5xl font-bold text-pink-800/70 h-full flex items-center justify-center">
+                    <h1 class="ml-2 text-5xl font-bold text-pink-800/70 h-full flex items-center justify-center">
                         {{ formatAlgorithmName(algorithm_name) }} Clustering
                     </h1>
                     <div class="col-span-2 col-start-11 row-start-1 h-full flex flex-col items-end justify-center">
