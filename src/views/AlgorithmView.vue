@@ -97,13 +97,13 @@
                             class="max-w-full max-h-full h-full w-full">
                             <template #loading> Loading cluster results data. Please wait. </template>
                             <Column field="cluster" header="Cluster" sortable style="width: 12.5%"></Column>
-                            <Column field="customer_count" header="Count" sortable style="width: 12.5%"></Column>
+                            <Column field="count" header="Count" sortable style="width: 12.5%"></Column>
                             <Column field="percentage" header="Percentage" sortable style="width: 12.5%">
                                 <template #body="slotProps">
                                     {{ (slotProps.data.percentage).toFixed(2) }}%
                                 </template>
                             </Column>
-                            <Column field="mid_west" header="Mid West" sortable style="width: 12.5%"></Column>
+                            <Column field="midwest" header="Mid West" sortable style="width: 12.5%"></Column>
                             <Column field="north" header="North" sortable style="width: 12.5%"></Column>
                             <Column field="northeast" header="Northeast" sortable style="width: 12.5%"></Column>
                             <Column field="south" header="South" sortable style="width: 12.5%"></Column>
