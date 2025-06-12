@@ -117,9 +117,9 @@
                     </h1>
                     <div class="col-span-2 col-start-11 row-start-1 h-full flex flex-col items-end justify-center">
                         <p class="text-md font-semibold text-pink-800/70">Algorithm Parameters</p>
-                        <div class="grid grid-rows-2 gap-2 w-full" :style="{ gridAutoFlow: 'column' }">
-                            <div v-for="parameter in algorithm_parameters" :key="parameter.name" class="text-right">
-                                <p class="text-pink-600/70 text-xs">{{ parameter.name }}: {{ parameter.value }}</p>
+                        <div class="grid grid-rows-2 gap-2 w-full" style="grid-auto-flow: column; direction: rtl;">
+                            <div v-for="parameter in algorithm_parameters" :key="parameter.name" class="text-right" style="direction: ltr;">
+                                <p class="text-pink-600/70 text-xs w-full">{{ parameter.name }}: {{ parameter.value }};</p>
                             </div>
                         </div>
                     </div>
