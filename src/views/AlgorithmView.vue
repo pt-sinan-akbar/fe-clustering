@@ -31,9 +31,9 @@
                     <TheHeader title="Customer Overview" class="w-full text-center" />
                     <GlassMorphismContainer class="overflow-y-hidden w-full h-full flex justify-center items-center">
                         <DataTable v-model:filters="filters" :value="customers" paginator showGridlines :rows="4"
-                            dataKey="id" filterDisplay="menu" :loading="loading" size="medium"
+                            dataKey="id" filterDisplay="menu" :loading="loading" size="small"
                             :globalFilterFields="['id', 'recency', 'frequency', 'monetary', 'state', 'cluster']"
-                            class="max-w-full max-h-full h-full w-full flex flex-col" tableStyle="font-size: 12px;">
+                            class="max-w-full max-h-full h-full w-full flex flex-col">
                             <template #loading> Loading customers data. Please wait. </template>
                             <Column field="id" header="Customer ID" style="min-width: 6rem">
                                 <template #body="{ data }">
@@ -93,7 +93,7 @@
                     <TheHeader title="Clustering Results" class="w-full text-center" />
                     <GlassMorphismContainer
                         class="overflow-hidden border w-full h-full flex justify-center items-center">
-                        <DataTable :value="clustering_results" removableSort size="medium" :loading="loading" tableStyle="font-size: 12px"
+                        <DataTable :value="clustering_results" removableSort size="small" :loading="loading"
                             class="max-w-full max-h-full h-full w-full">
                             <template #loading> Loading cluster results data. Please wait. </template>
                             <Column field="cluster" header="Cluster" sortable style="width: 12.5%"></Column>
