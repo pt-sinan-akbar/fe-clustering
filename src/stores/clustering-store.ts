@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import axios from 'axios'
 
 interface Algorithm {
     id: number
@@ -82,8 +83,8 @@ export const useClusteringStore = defineStore('clustering', {
         currentAlgorithm: '',
         currentAlgorithmId: null as number | null,
         algorithms: [] as Algorithm[],
-        customersData: [] as Customer[], 
-        isCustomersDataFetched: false, 
+        customersData: [] as Customer[],
+        isCustomersDataFetched: false,
 
         algorithmData: new Map<number, {
             results: ClusteringResult[]
@@ -95,7 +96,7 @@ export const useClusteringStore = defineStore('clustering', {
     getters: {
         getCurrentAlgorithmData(): ClusteringData | null {
             if (!this.currentAlgorithm || !this.currentAlgorithmId) return null;
-            
+
             const algorithmSpecificData = this.algorithmData.get(this.currentAlgorithmId);
             if (!algorithmSpecificData) return null;
 
@@ -121,23 +122,23 @@ export const useClusteringStore = defineStore('clustering', {
 
         getAlgorithmIdByName(algorithmName: string): number | null {
             const normalizedSearch = algorithmName.toLowerCase().replace(/-/g, '');
-            
+
             const algorithm = this.algorithms.find(algo => {
                 const normalizedName = algo.name.toLowerCase().replace(/-/g, '');
                 return normalizedName === normalizedSearch;
             });
-            
+
             return algorithm ? algorithm.id : null;
         },
 
         async fetchCustomersData() {
             if (this.isCustomersDataFetched) {
-                return; 
+                return;
             }
 
             try {
-                const customersResponse = await fetch('http://localhost:8000/api/v1/clustering/customers');
-                const customersData = await customersResponse.json();
+                const customersResponse = await axios.get('/api/v1/clustering/customers');
+                const customersData = await customersResponse.data;
                 this.customersData = customersData;
                 this.isCustomersDataFetched = true;
             } catch (error) {
@@ -148,12 +149,12 @@ export const useClusteringStore = defineStore('clustering', {
 
         async fetchAlgorithmsData() {
             if (this.algorithms.length > 0) {
-                return; 
+                return;
             }
 
             try {
-                const algorithmsResponse = await fetch('http://localhost:8000/api/v1/clustering/algorithms');
-                const algorithmsData = await algorithmsResponse.json();
+                const algorithmsResponse = await axios.get('/api/v1/clustering/algorithms');
+                const algorithmsData = await algorithmsResponse.data;
                 this.algorithms = algorithmsData;
             } catch (error) {
                 console.error('Error fetching algorithms data:', error);
@@ -163,20 +164,20 @@ export const useClusteringStore = defineStore('clustering', {
 
         async fetchAlgorithmSpecificData(algorithmId: number) {
             if (this.algorithmData.has(algorithmId)) {
-                return; 
+                return;
             }
 
             try {
                 const [resultsResponse, metricsResponse, paramsResponse] = await Promise.all([
-                    fetch(`http://localhost:8000/api/v1/clustering/clustering-results/${algorithmId}`),
-                    fetch(`http://localhost:8000/api/v1/clustering/metric-results/${algorithmId}`),
-                    fetch(`http://localhost:8000/api/v1/clustering/parameters/${algorithmId}`)
+                    axios.get(`/api/v1/clustering/clustering-results/${algorithmId}`),
+                    axios.get(`/api/v1/clustering/metric-results/${algorithmId}`),
+                    axios.get(`/api/v1/clustering/parameters/${algorithmId}`)
                 ]);
 
                 const [resultsData, metricsData, paramsData] = await Promise.all([
-                    resultsResponse.json(),
-                    metricsResponse.json(),
-                    paramsResponse.json()
+                    resultsResponse.data,
+                    metricsResponse.data,
+                    paramsResponse.data
                 ]);
 
                 console.log(`Metrics for algorithm ID ${algorithmId}:`, metricsData);
@@ -224,15 +225,15 @@ export const useClusteringStore = defineStore('clustering', {
 
         async switchToAlgorithm(algorithmName: string) {
             this.currentAlgorithm = algorithmName;
-            
+
             await this.initializeData();
-            
+
             // Get algorithm_id by name
             const algorithmId = this.getAlgorithmIdByName(algorithmName);
             if (!algorithmId) {
                 throw new Error(`Algorithm '${algorithmName}' not found`);
             }
-            
+
             this.currentAlgorithmId = algorithmId;
             await this.fetchAlgorithmSpecificData(algorithmId);
         },
@@ -240,13 +241,13 @@ export const useClusteringStore = defineStore('clustering', {
         // Alternative method to switch by algorithm_id directly
         async switchToAlgorithmById(algorithmId: number) {
             await this.initializeData();
-            
+
             // Find algorithm name by ID
             const algorithm = this.algorithms.find(algo => algo.id === algorithmId);
             if (!algorithm) {
                 throw new Error(`Algorithm with ID ${algorithmId} not found`);
             }
-            
+
             this.currentAlgorithm = algorithm.name;
             this.currentAlgorithmId = algorithmId;
             await this.fetchAlgorithmSpecificData(algorithmId);
@@ -274,10 +275,10 @@ export const useClusteringStore = defineStore('clustering', {
 
         async preloadAllAlgorithmData() {
             await this.initializeData();
-            
+
             // Get all algorithm IDs from the fetched algorithms
             const algorithmIds = this.algorithms.map(algo => algo.id);
-            
+
             await Promise.all(
                 algorithmIds.map(algorithmId => this.fetchAlgorithmSpecificData(algorithmId))
             );
