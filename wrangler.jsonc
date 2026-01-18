@@ -1,0 +1,14 @@
+{
+  "name": "fe-clustering",
+  "compatibility_date": "2025-11-15",
+  "assets": {
+    "directory": "dist",
+    "not_found_handling": "single-page-application",
+  },
+  "routes": [
+    {
+      "pattern": "skrispi.mraditya.my.id",
+      "custom_domain": true,
+    },
+  ],
+}
